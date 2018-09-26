@@ -29,7 +29,7 @@ namespace Xamarin.Forms.Controls
 		public App()
 		{
 			_testCloudService = DependencyService.Get<ITestCloudService>();
-			
+
 			SetMainPage(CreateDefaultMainPage());
 
 			//// Uncomment to verify that there is no gray screen displayed between the blue splash and red MasterDetailPage.
@@ -51,18 +51,86 @@ namespace Xamarin.Forms.Controls
 			//SetMainPage(new Issues.Issue2004());
 		}
 
+		class CustomGrid : Grid
+		{
+			protected override SizeRequest OnMeasure(double widthConstraint, double heightConstraint)
+			{
+				return base.OnMeasure(widthConstraint, heightConstraint);
+			}
+
+			protected override void LayoutChildren(double x, double y, double width, double height)
+			{
+				base.LayoutChildren(x, y, width, height);
+			}
+		}
+
+		class CustomLabel : Label
+		{
+			protected override SizeRequest OnMeasure(double widthConstraint, double heightConstraint)
+			{
+				return base.OnMeasure(widthConstraint, heightConstraint);
+			}
+		}
+		View createGrid()
+		{
+			var grid = new CustomGrid
+			{
+				BackgroundColor = Color.Gray
+			};
+
+			grid.RowDefinitions.Add(new RowDefinition());
+			grid.RowDefinitions.Add(new RowDefinition());
+			grid.ColumnDefinitions.Add(new ColumnDefinition());
+			grid.ColumnDefinitions.Add(new ColumnDefinition() { Width = GridLength.Star });
+
+			var label = new CustomLabel { Text = "hello", HorizontalOptions = LayoutOptions.Start, BackgroundColor = Color.Yellow };
+			var label2 = new CustomLabel { Text = "hello 2", HorizontalOptions = LayoutOptions.Start, BackgroundColor = Color.Yellow };
+			grid.Children.Add(label);
+			grid.Children.Add(label2);
+			Grid.SetRow(label2, 1);
+
+			var label3 = new Label { Text = "right aligned", HorizontalTextAlignment = TextAlignment.End };
+			Grid.SetColumn(label3, 1);
+			grid.Children.Add(label3);
+			return grid;
+		}
+
 		public Page CreateDefaultMainPage()
 		{
-			var layout = new StackLayout { BackgroundColor = Color.Red };
-			layout.Children.Add(new Label { Text ="This is master Page" });
-			var master = new ContentPage { Title = "Master", Content = layout,  BackgroundColor = Color.SkyBlue };
+			//var page = new ContentPage
+			//{
+			//	Content = createGrid(),
+			//	Title = "details"
+			//};
+			//NavigationPage.SetTitleView(page, createGrid());
+			//var navigationPage = new NavigationPage(page);
+
+			///*var tabbedPage = new TabbedPage();
+			//page.ToolbarItems.Add(new ToolbarItem() { Text = "Wubbulub" });
+
+			//NavigationPage.SetTitleIcon(page, "coffee.png");
+			//tabbedPage.Children.Add(navigationPage);
+			//return tabbedPage;*/
+
+			//MasterDetailPage masterDetailPage = new MasterDetailPage()
+			//{
+			//	Detail = navigationPage,
+			//	Master = new ContentPage() { Title = "Master" }
+			//};
+
+			//return masterDetailPage;
+
+			return new GalleryPages.TitleView(false).GetPage();
+			/*var layout = new StackLayout { BackgroundColor = Color.Red };
+			layout.Children.Add(new Label { Text = "This is master Page" });
+			var master = new ContentPage { Title = "Master", Content = layout, BackgroundColor = Color.SkyBlue };
 			master.On<iOS>().SetUseSafeArea(true);
 			return new MasterDetailPage
 			{
 				AutomationId = DefaultMainPageId,
 				Master = master,
 				Detail = CoreGallery.GetMainPage()
-			};
+			};*/
 		}
 
 		protected override void OnAppLinkRequestReceived(Uri uri)
@@ -158,7 +226,7 @@ namespace Xamarin.Forms.Controls
 				// Set up a delegate to handle the navigation to the test page
 				EventHandler toTestPage = null;
 
-				toTestPage = delegate(object sender, EventArgs e) 
+				toTestPage = delegate (object sender, EventArgs e)
 				{
 					Current.MainPage.Navigation.PushModalAsync(TestCases.GetTestCases());
 					TestCases.TestCaseScreen.PageToAction[test]();
@@ -172,7 +240,7 @@ namespace Xamarin.Forms.Controls
 
 				return true;
 			}
-			catch (Exception ex) 
+			catch (Exception ex)
 			{
 				Log.Warning("UITests", $"Error attempting to navigate directly to {test}: {ex}");
 
@@ -180,7 +248,7 @@ namespace Xamarin.Forms.Controls
 
 			return false;
 		}
-		
+
 		public void Reset()
 		{
 			SetMainPage(CreateDefaultMainPage());
