@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Xamarin.Forms.Controls.GalleryPages.TitleView">
@@ -21,6 +21,7 @@
 			<Button Clicked="toggleSecondaryToolBarItem_Clicked" Text="Toggle Secondary Tool Bar Item" ></Button>
 			<Button Clicked="toggleLargeTitles_Clicked" Text="Toggle Large Titles" ></Button>
 			<Button Clicked="changeTitleView_Clicked" Text="Change Title View"></Button>
+			<Button Clicked="toggleBackButtonText_Clicked" Text="Toggle Back Button Title Text"></Button>
 			<Button Clicked="backToGallery_Clicked" Text="Back to Gallery"></Button>
 		</StackLayout>
 	</ScrollView>

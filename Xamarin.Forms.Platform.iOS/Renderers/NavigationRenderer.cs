@@ -983,6 +983,7 @@ namespace Xamarin.Forms.Platform.iOS
 					UpdateTitleArea(Child);
 			}
 
+
 			internal void UpdateLeftBarButtonItem(Page pageBeingRemoved = null)
 			{
 				NavigationRenderer n;
@@ -992,16 +993,30 @@ namespace Xamarin.Forms.Platform.iOS
 				var currentChild = this.Child;
 				var firstPage = n.NavPage.Pages.FirstOrDefault();
 
-				if ((firstPage != pageBeingRemoved && currentChild != firstPage && NavigationPage.GetHasBackButton(currentChild)) || n._parentMasterDetailPage == null)
+
+				if (n._parentMasterDetailPage == null)
 					return;
+
+				if (firstPage != pageBeingRemoved && currentChild != firstPage && NavigationPage.GetHasBackButton(currentChild))
+				{
+					NavigationItem.LeftBarButtonItem = null;
+					return;
+				}
 
 				SetMasterLeftBarButton(this, n._parentMasterDetailPage);
 			}
+
+
+			public bool NeedsTitleViewContainer(Page page) => NavigationPage.GetTitleIcon(page) != null || NavigationPage.GetTitleView(page) != null;
 
 			internal void UpdateTitleArea(Page page)
 			{
 				if (page == null)
 					return;
+
+				FileImageSource titleIcon = NavigationPage.GetTitleIcon(page);
+				View titleView = NavigationPage.GetTitleView(page);
+				bool needContainer = titleView != null || titleIcon != null;
 
 				if (!string.IsNullOrWhiteSpace(page.Title))
 					NavigationItem.Title = page.Title;
@@ -1010,26 +1025,33 @@ namespace Xamarin.Forms.Platform.iOS
 				UpdateLeftBarButtonItem();
 
 				var titleText = NavigationPage.GetBackButtonTitle(page);
+
 				if (titleText != null)
 				{
 					// adding a custom event handler to UIBarButtonItem for navigating back seems to be ignored.
 					NavigationItem.BackBarButtonItem = new UIBarButtonItem { Title = titleText, Style = UIBarButtonItemStyle.Plain };
 				}
 
-				FileImageSource titleIcon = NavigationPage.GetTitleIcon(page);
-				View titleView = NavigationPage.GetTitleView(page);
-
 				ClearTitleViewContainer();
-
-				bool needContainer = titleView != null || titleIcon != null;
-
 				if (needContainer)
 				{
 					NavigationRenderer n;
 					if (!_navigation.TryGetTarget(out n))
 						return;
 
-					Container titleViewContainer = new Container(titleView);
+					// if we're using a title view then we remove back button adornments
+					if (n.ViewControllers.Length > 0)
+					{
+						var previousController = n.ViewControllers[n.ViewControllers.Length - 1];
+						if (previousController != this)
+						{
+							previousController.NavigationItem.Title = null;
+							previousController.NavigationItem.BackBarButtonItem = new UIBarButtonItem { Title = "", Style = UIBarButtonItemStyle.Plain };
+						}
+					}
+
+					Container titleViewContainer = new Container(titleView, n.NavigationBar);
+
 					UpdateTitleImage(titleViewContainer, titleIcon);
 					NavigationItem.TitleView = titleViewContainer;
 
@@ -1084,15 +1106,17 @@ namespace Xamarin.Forms.Platform.iOS
 
 			void UpdateHasBackButton()
 			{
-				if (Child == null)
+				if (Child == null || NavigationItem.HidesBackButton == !NavigationPage.GetHasBackButton(Child))
 					return;
 
 				NavigationItem.HidesBackButton = !NavigationPage.GetHasBackButton(Child);
 
-				if (!Forms.IsiOS11OrNewer)
-				{
+				NavigationRenderer n;
+				if (!_navigation.TryGetTarget(out n))
+					return;
+
+				if (!Forms.IsiOS11OrNewer || n._parentMasterDetailPage != null)
 					UpdateTitleArea(Child);
-				}
 			}
 
 			void UpdateNavigationBarVisibility(bool animated)
@@ -1226,19 +1250,32 @@ namespace Xamarin.Forms.Platform.iOS
 		class Container : UIView
 		{
 			View _view;
+			UINavigationBar _bar;
 			IVisualElementRenderer _child;
-			UIImageView _icon;
+			UIImageView _icon;		
 
-			public Container(View view)
+			public Container(View view, UINavigationBar bar) : base(bar.Bounds)
 			{
+				if (Forms.IsiOS11OrNewer)
+				{
+					TranslatesAutoresizingMaskIntoConstraints = false;
+				}
+				else
+				{
+					TranslatesAutoresizingMaskIntoConstraints = true;
+					AutoresizingMask = UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleWidth;
+				}
+
 				_view = view;
+				_bar = bar;
 				_child = Platform.CreateRenderer(view);
 				Platform.SetRenderer(view, _child);
 				AddSubview(_child.NativeView);
 			}
 
-			nfloat IconHeight => _icon?.Frame.Height ?? 0;
+			public override CGSize IntrinsicContentSize => UILayoutFittingExpandedSize;
 
+			nfloat IconHeight => _icon?.Frame.Height ?? 0;
 			nfloat IconWidth => _icon?.Frame.Width ?? 0;
 
 			// Navigation bar will not stretch past these values. Prevent content clipping.
@@ -1250,7 +1287,16 @@ namespace Xamarin.Forms.Platform.iOS
 				get => base.Frame;
 				set
 				{
-					value.Height = ToolbarHeight;
+					if(Superview != null)
+					{
+						if (!Forms.IsiOS11OrNewer)
+						{
+							value.Y = Superview.Bounds.Y;
+						};
+
+						value.Height = ToolbarHeight;
+					}
+
 					base.Frame = value;
 				}
 			}
@@ -1293,7 +1339,7 @@ namespace Xamarin.Forms.Platform.iOS
 
 				if (_child?.Element != null)
 				{
-					var layoutBounds = new Rectangle(IconWidth, 0, Bounds.Width - IconWidth, height);
+					var layoutBounds = new Rectangle(IconWidth, 0, Frame.Width - IconWidth, height);
 					if (_child.Element.Bounds != layoutBounds)
 						Layout.LayoutChildIntoBoundingRegion(_child.Element, layoutBounds);
 				}

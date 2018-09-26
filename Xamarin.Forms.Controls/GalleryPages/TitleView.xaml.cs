@@ -20,15 +20,13 @@ namespace Xamarin.Forms.Controls.GalleryPages
 
 			if (initialLoad)
 			{
-				Device.BeginInvokeOnMainThread(() => navigationPage_Clicked(this, EventArgs.Empty));
+				Device.BeginInvokeOnMainThread(() => masterDetailsPage_Clicked(this, EventArgs.Empty));
 			}
-
-			//NavigationPage.SetTitleView(this, createGrid());
 		}
 
 		NavigationPage CreateNavigationPage()
 		{
-			return new NavigationPage(new TitleView(false) { Title = "Title" });
+			return new NavigationPage(new TitleView(false) { Title = "Nav Title" });
 		}
 
 		public Page GetPage()
@@ -46,9 +44,22 @@ namespace Xamarin.Forms.Controls.GalleryPages
 				new MasterDetailPage()
 				{
 					Detail = CreateNavigationPage(),
-					Master = new ContentPage() { Title = "Master" }
+					Master = new ContentPage() { Title = "Master" },
 				};
 
+		}
+
+		void toggleBackButtonText_Clicked(object sender, EventArgs e)
+		{
+			var page = Navigation.NavigationStack.First();
+			var titleText = NavigationPage.GetBackButtonTitle(page);
+
+			if (string.IsNullOrEmpty(titleText))
+				NavigationPage.SetBackButtonTitle(page, "to legit too legit to quit");
+			else
+				NavigationPage.SetBackButtonTitle(page, null);
+
+			changeTitleView_Clicked(this, EventArgs.Empty);
 		}
 
 		private void tabbedPage_Clicked(object sender, EventArgs e)
@@ -95,7 +106,7 @@ namespace Xamarin.Forms.Controls.GalleryPages
 					}
 				}};
 
-			NavigationPage.SetHasBackButton(page, !NavigationPage.GetHasBackButton(page));
+
 			NavigationPage.SetTitleView(page, createGrid());
 			Navigation.PushAsync(page);
 		}

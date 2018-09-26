@@ -97,6 +97,9 @@ namespace Xamarin.Forms.Controls
 
 		public Page CreateDefaultMainPage()
 		{
+
+
+
 			//var page = new ContentPage
 			//{
 			//	Content = createGrid(),
@@ -110,7 +113,7 @@ namespace Xamarin.Forms.Controls
 
 			//NavigationPage.SetTitleIcon(page, "coffee.png");
 			//tabbedPage.Children.Add(navigationPage);
-			//return tabbedPage;*/
+			//return tabbedPage;*/	
 
 			//MasterDetailPage masterDetailPage = new MasterDetailPage()
 			//{
@@ -120,7 +123,7 @@ namespace Xamarin.Forms.Controls
 
 			//return masterDetailPage;
 
-			return new GalleryPages.TitleView(false).GetPage();
+			return new GalleryPages.TitleView(true);
 			/*var layout = new StackLayout { BackgroundColor = Color.Red };
 			layout.Children.Add(new Label { Text = "This is master Page" });
 			var master = new ContentPage { Title = "Master", Content = layout, BackgroundColor = Color.SkyBlue };
