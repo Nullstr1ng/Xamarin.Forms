@@ -17,6 +17,98 @@ using SizeF = CoreGraphics.CGSize;
 
 namespace Xamarin.Forms.Platform.iOS
 {
+
+	public class FormsNavigationBar : UINavigationBar
+	{
+		public FormsNavigationBar() : base()
+		{
+		}
+
+		public FormsNavigationBar(Foundation.NSCoder coder) : base(coder)
+		{
+		}
+
+		protected FormsNavigationBar(Foundation.NSObjectFlag t) : base(t)
+		{
+		}
+
+		protected internal FormsNavigationBar(IntPtr handle) : base(handle)
+		{
+		}
+
+		public FormsNavigationBar(RectangleF frame) : base(frame)
+		{
+		}
+
+		UIColor[] colors = new UIColor[] 
+		{
+			UIColor.Blue, UIColor.Green, UIColor.Yellow,
+			UIColor.Red, UIColor.Orange, UIColor.Purple, UIColor.Brown
+		};
+
+		public UIImageView BackImage
+		{
+			get
+			{
+				int i = 0;
+				foreach (var item in this)
+				{i++;
+
+					if (item is UIImageView)
+					{
+						var value =	(UIImageView)item;
+						if (value.AccessibilityLabel == "Back")
+						{
+							return value;
+						}
+					}
+				}
+
+				return null;
+			}
+		}
+
+	
+		public override void LayoutSubviews()
+		{
+			base.LayoutSubviews();
+
+			int i = 0;
+			foreach (var item in this)
+			{
+				var view = (item as UIView);
+				//(item as UIView).BackgroundColor = colors[i];
+				if (item is UIImageView)
+				{
+					var value = (UIImageView)item;
+					if (value.AccessibilityLabel == "Back")
+					{
+						this.Subviews[1].Frame = value.Frame;
+					}
+				}
+				System.Diagnostics.Debug.WriteLine($"{i}: {view.GetType().Name} {colors[i]}: {view.Frame} {view.Bounds} constraints: {view.Constraints.Length} {view}");
+				
+				i++;
+			}
+
+		}
+
+		public UIView BackButton
+		{
+			get
+			{
+				
+				foreach (var item in this)
+				{
+					if (item.GetType().Name == "UIButton")
+						return (UIView)item;
+				}
+
+				return null;
+			}
+		}
+	}
+
 	public class NavigationRenderer : UINavigationController, IVisualElementRenderer, IEffectControlProvider
 	{
 		internal const string UpdateToolbarButtons = "Xamarin.UpdateToolbarButtons";
@@ -33,7 +125,7 @@ namespace Xamarin.Forms.Platform.iOS
 		UIImage _defaultNavBarShadowImage;
 		UIImage _defaultNavBarBackImage;
 
-		public NavigationRenderer()
+		public NavigationRenderer() : base(typeof(FormsNavigationBar), null)
 		{
 			MessagingCenter.Subscribe<IVisualElementRenderer>(this, UpdateToolbarButtons, sender =>
 			{
@@ -1250,7 +1342,7 @@ namespace Xamarin.Forms.Platform.iOS
 		class Container : UIView
 		{
 			View _view;
-			UINavigationBar _bar;
+			FormsNavigationBar _bar;
 			IVisualElementRenderer _child;
 			UIImageView _icon;		
 
@@ -1267,7 +1359,7 @@ namespace Xamarin.Forms.Platform.iOS
 				}
 
 				_view = view;
-				_bar = bar;
+				_bar = (FormsNavigationBar)bar;
 				_child = Platform.CreateRenderer(view);
 				Platform.SetRenderer(view, _child);
 				AddSubview(_child.NativeView);
@@ -1295,6 +1387,18 @@ namespace Xamarin.Forms.Platform.iOS
 						};
 
 						value.Height = ToolbarHeight;
+						var backButton = _bar.BackButton;
+						if (backButton != null)
+						{
+							backButton.BackgroundColor = UIColor.Purple;
+							(backButton as UIButton).SetTitle("road rage", UIControlState.Normal);
+						}
+
+						backButton = _bar.BackImage;
+						if (backButton != null)
+						{
+							backButton.BackgroundColor = UIColor.Green;
+						}
 					}
 
 					base.Frame = value;

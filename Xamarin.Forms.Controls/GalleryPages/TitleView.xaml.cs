@@ -116,7 +116,7 @@ namespace Xamarin.Forms.Controls.GalleryPages
 		{
 			var grid = new Grid
 			{
-				BackgroundColor = Color.Gray
+				BackgroundColor = Color.Transparent
 			};
 
 			grid.RowDefinitions.Add(new RowDefinition());
